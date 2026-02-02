@@ -142,7 +142,85 @@ Ajustar o binário do NAMD:
 ```bash
 NAMD_BIN="namd3"
 ```
-### 4.5. Configurações do SLURM
+### **4.5. Arquivo `.conf` molde do NAMD3**
+
+O pipeline utiliza um **arquivo de configuração do NAMD3 como molde**, que é automaticamente copiado e editado para cada sistema durante a etapa de preparação da dinâmica (`prepara_dinamica.py`).
+
+Este arquivo define os **parâmetros físicos**, **topologias**, **potenciais** e **condições de contorno** da simulação.
+
+#### **4.5.1. Topologias e parâmetros**
+
+É obrigatório ajustar, no arquivo `.conf` molde, os caminhos para as topologias e parâmetros utilizados pelo NAMD3.  
+Exemplo:
+
+```tcl
+# Topologias e parâmetros CHARMM
+parameters          /home/alphafold/namd_parameters/par_all36_prot.prm
+parameters          /home/alphafold/namd_parameters/par_all36_na.prm
+parameters          /home/alphafold/namd_parameters/toppar_water_ions.str
+
+```
+
+#### 4.5.1. Requisitos de Arquivos
+Esses arquivos devem existir no sistema e ser compatíveis com:
+* A topologia utilizada no **VMD** (`top_all36_prot.rtf`)
+* O modelo de água selecionado
+* A ionização aplicada ($Na^+$ / $Cl^-$)
+
+#### 4.5.2. Estrutura e Coordenadas
+As linhas abaixo não precisam ser editadas manualmente, pois são substituídas automaticamente pelo pipeline para cada sistema:
+
+```tcl
+structure           CAMINHO/DO/ARQUIVO.psf
+coordinates         CAMINHO/DO/ARQUIVO.pdb
+Nota: Durante a preparação, o script prepara_dinamica.py ajusta esses campos para apontar para os arquivos finais de cada proteína.
+
+```
+#### 4.5.3. Condições Periódicas de Contorno (PBC)
+As dimensões da caixa de solvatação e a origem da célula periódica também são calculadas automaticamente a partir do PDB final:
+
+```Tcl
+
+cellBasisVector1    X 0 0
+cellBasisVector2    0 Y 0
+cellBasisVector3    0 0 Z
+cellOrigin          Xc Yc Zc
+
+```
+Esses valores são obtidos diretamente das coordenadas atômicas, garantindo consistência entre a solvatação e a dinâmica.
+
+#### 4.5.4. Tempo de Simulação e Condições Termodinâmicas
+O tempo total da simulação é controlado pelo número de passos (run) e pelo timestep.
+
+Exemplo:
+
+```Tcl
+
+timestep            2.0
+run                 2500000   ;# ~5 ns
+Para simulações mais longas, esse valor pode ser ajustado conforme necessário.
+```
+A pressão e temperatura são controladas via:
+
+```Tcl
+
+langevin            on
+langevinTemp        310
+
+langevinPiston      on
+langevinPistonTarget 1.01325   ;# 1 atm (ajustado conforme padrão NAMD)
+
+```
+#### 4.5.5. Importância do Arquivo .conf Molde
+O arquivo .conf molde define o comportamento físico da simulação. Antes de executar o pipeline em produção, recomenda-se:
+
+- Revisar cuidadosamente as topologias e parâmetros.
+
+- Garantir compatibilidade com as versões do VMD e NAMD instaladas.
+
+- Validar o arquivo com uma simulação curta de teste.
+
+### 4.6. Configurações do SLURM
 
 Todos os scripts .sh possuem diretivas #SBATCH.
 É necessário ajustar:
