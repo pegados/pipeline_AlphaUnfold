@@ -61,7 +61,7 @@ O diretório gerado deve ser configurado no script **alphafold3_array.sh**
 É necessário possuir a imagem do AlphaFold 3 em formato Apptainer (.sif).
 
 ```bash
-Link da imagem:
+Link da imagem: https://drive.google.com/file/d/1rIfaK87x5HPY4tc9_T3utbrXhF1acq3M/view?usp=sharing
 ```
 
 Exemplo de configuração:
