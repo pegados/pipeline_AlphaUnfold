@@ -1,5 +1,5 @@
 # ==============================================================================
-# Script TCL para VMD: RMSD, Raio de Giro e SASA
+# Script TCL para VMD: RMSD, RoG, SASA e RMSF
 # Calcula média e desvio padrão dos últimos 20% da trajetória
 # ==============================================================================
 
@@ -53,6 +53,8 @@ for {set i $start_frame} {$i < $num_frames} {incr i} {
     # Superfície total, restrita aos átomos hidrofóbicos
     lappend val_sasa_hidro [measure sasa 1.4 $sel_total -restrict $sel_hidro]
 }
+# O RMSF é calculado uma única vez usando o intervalo definido
+set rmsf_list [measure rmsf $sel_backbone first $start_frame last [expr $num_frames - 1] step 1]
 
 # 4. Função Estatística
 proc calc_stats {data_list} {
@@ -75,20 +77,18 @@ proc calc_stats {data_list} {
     return [list $mean $stdev]
 }
 
-# 5. Cálculos Finais
+# 5. Cálculos Finais e Extração de Variáveis
 set stats_rmsd [calc_stats $val_rmsd]
 set stats_rgyr [calc_stats $val_rgyr]
 set stats_sasa_g [calc_stats $val_sasa_glob]
 set stats_sasa_h [calc_stats $val_sasa_hidro]
 
-# Extração (Média)
-set mean_rmsd [lindex $stats_rmsd 0]
-set mean_rgyr [lindex $stats_rgyr 0]
+# EXTRAÇÃO NECESSÁRIA:
+set mean_rmsd   [lindex $stats_rmsd 0]
+set mean_rgyr   [lindex $stats_rgyr 0]
 set mean_sasa_g [lindex $stats_sasa_g 0]
 set mean_sasa_h [lindex $stats_sasa_h 0]
-
-# Extração (Desvio Padrão do SASA Global)
-set sd_sasa_g [lindex $stats_sasa_g 1]
+set sd_sasa_g   [lindex $stats_sasa_g 1]
 
 # 6. Saída CSV Temporária
 set outfile [open "metrics_temp.csv" w]
@@ -97,7 +97,16 @@ puts $outfile "RMSD,$mean_rmsd"
 puts $outfile "Raio_Giro,$mean_rgyr"
 puts $outfile "SASA_Global,$mean_sasa_g"
 puts $outfile "SASA_Hidro,$mean_sasa_h"
-puts $outfile "Desvio_Padrao,$sd_sasa_g"
+puts $outfile "Desvio_Padrao_SASA_G,$sd_sasa_g"
 close $outfile
+
+# --- Saída CSV do RMSF ---
+set f_rmsf [open "rmsf_per_residue.csv" w]
+puts $f_rmsf "Residue,RMSF"
+set resids [$sel_backbone get resid]
+foreach r $resids v $rmsf_list {
+    puts $f_rmsf "$r,$v"
+}
+close $f_rmsf
 
 exit
