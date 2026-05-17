@@ -122,7 +122,7 @@ segment U {{
     pdb "{os.path.basename(pdb_prot)}"
     first NTER
     last CTER
-    auto angles dihedrals
+    auto patches angles dihedrals
 }}
 
 coordpdb "{os.path.basename(pdb_prot)}" U
